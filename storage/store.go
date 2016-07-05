@@ -6,5 +6,5 @@ type Store interface {
 	Get([]byte) ([]byte, error)
 	Set([]byte, []byte) error
 	Delete([]byte) error
-	Incr([]byte) (int, error)
+	NextSequence() (int, error)
 }
