@@ -1,11 +1,12 @@
 package shortner
 
 import (
-	"os"
+	"errors"
+	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/jimeh/ozu.io/storage"
-	"github.com/jimeh/ozu.io/storage/goleveldbstore"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -25,9 +26,57 @@ var shortenExamples = []struct {
 	{uid: "ij", url: "https://gist.github.com/"},
 }
 
-// Setup Suite
+// Mocks
 
-var testDbPath = "./goleveldb_test_data"
+func NewMockStore() *MockStore {
+	return &MockStore{
+		Data:     map[string][]byte{},
+		Sequence: 1000,
+	}
+}
+
+type MockStore struct {
+	sync.RWMutex
+	Data     map[string][]byte
+	Sequence int
+}
+
+func (s *MockStore) Close() error {
+	return nil
+}
+
+func (s *MockStore) Get(key []byte) ([]byte, error) {
+	s.RLock()
+	defer s.RUnlock()
+	value := s.Data[string(key)]
+	if value == nil {
+		return nil, errors.New("not found")
+	}
+	return value, nil
+}
+
+func (s *MockStore) Set(key []byte, value []byte) error {
+	s.Lock()
+	defer s.Unlock()
+	s.Data[string(key)] = value
+	return nil
+}
+
+func (s *MockStore) Delete(key []byte) error {
+	s.Lock()
+	defer s.Unlock()
+	delete(s.Data, string(key))
+	return nil
+}
+
+func (s *MockStore) NextSequence() (int, error) {
+	s.Lock()
+	defer s.Unlock()
+	s.Sequence++
+	return s.Sequence, nil
+}
+
+// Setup Suite
 
 type ShortnerSuite struct {
 	suite.Suite
@@ -36,19 +85,8 @@ type ShortnerSuite struct {
 }
 
 func (s *ShortnerSuite) SetupTest() {
-	store, err := goleveldbstore.New(testDbPath)
-	s.Require().NoError(err)
-
-	err = store.Set(goleveldbstore.DefaultSequenceKey, []byte("1000"))
-	s.Require().NoError(err)
-
-	s.store = store
-	s.shortner = New(store)
-}
-
-func (s *ShortnerSuite) TearDownTest() {
-	_ = s.store.Close()
-	_ = os.RemoveAll(testDbPath)
+	s.store = NewMockStore()
+	s.shortner = New(s.store)
 }
 
 func (s *ShortnerSuite) Seed() {
@@ -100,4 +138,25 @@ func (s *ShortnerSuite) TestLookup() {
 
 func TestShortnerSuite(t *testing.T) {
 	suite.Run(t, new(ShortnerSuite))
+}
+
+// Benchmarks
+
+func BenchmarkShorten(b *testing.B) {
+	shortner := New(NewMockStore())
+	rawURL := []byte("https://google.com/")
+
+	for n := 0; n < b.N; n++ {
+		_, _, _ = shortner.Shorten(append(rawURL, strconv.Itoa(n)...))
+	}
+}
+
+func BenchmarkLookup(b *testing.B) {
+	shortner := New(NewMockStore())
+	rawURL := []byte("https://google.com/")
+	uid, _, _ := shortner.Shorten(rawURL)
+
+	for n := 0; n < b.N; n++ {
+		_, _ = shortner.Lookup(uid)
+	}
 }
