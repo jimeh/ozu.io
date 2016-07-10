@@ -2,161 +2,139 @@ package shortner
 
 import (
 	"errors"
-	"strconv"
-	"sync"
+	"strings"
 	"testing"
 
-	"github.com/jimeh/ozu.io/storage"
+	"github.com/jimeh/ozu.io/shortner/mocks"
 	"github.com/stretchr/testify/suite"
 )
 
-// Test Cases
-
-var shortenExamples = []struct {
-	uid        string
-	url        string
-	normalized string
-}{
-	{uid: "ig", url: "google.com", normalized: "http://google.com/"},
-	{uid: "ih", url: "https://google.com", normalized: "https://google.com/"},
-	{uid: "ig", url: "http://google.com", normalized: "http://google.com/"},
-	{uid: "ih", url: "https://google.com/"},
-	{uid: "ig", url: "google.com/", normalized: "http://google.com/"},
-	{uid: "ii", url: "https://github.com/"},
-	{uid: "ij", url: "https://gist.github.com/"},
-}
-
 // Mocks
 
-func NewMockStore() *MockStore {
-	return &MockStore{
-		Data:     map[string][]byte{},
-		Sequence: 1000,
-	}
-}
+//go:generate mockery -name Store -dir .. -recursive
 
-type MockStore struct {
-	sync.RWMutex
-	Data     map[string][]byte
-	Sequence int
-}
-
-func (s *MockStore) Close() error {
-	return nil
-}
-
-func (s *MockStore) Get(key []byte) ([]byte, error) {
-	s.RLock()
-	defer s.RUnlock()
-	value := s.Data[string(key)]
-	if value == nil {
-		return nil, errors.New("not found")
-	}
-	return value, nil
-}
-
-func (s *MockStore) Set(key []byte, value []byte) error {
-	s.Lock()
-	defer s.Unlock()
-	s.Data[string(key)] = value
-	return nil
-}
-
-func (s *MockStore) Delete(key []byte) error {
-	s.Lock()
-	defer s.Unlock()
-	delete(s.Data, string(key))
-	return nil
-}
-
-func (s *MockStore) NextSequence() (int, error) {
-	s.Lock()
-	defer s.Unlock()
-	s.Sequence++
-	return s.Sequence, nil
-}
-
-// Setup Suite
+// Suite Setup
 
 type ShortnerSuite struct {
 	suite.Suite
-	shortner *Shortner
-	store    storage.Store
+	store       *mocks.Store
+	shortner    *Shortner
+	errNotFound error
 }
 
 func (s *ShortnerSuite) SetupTest() {
-	s.store = NewMockStore()
+	s.store = new(mocks.Store)
 	s.shortner = New(s.store)
-}
-
-func (s *ShortnerSuite) Seed() {
-	r := s.Require()
-
-	for _, e := range shortenExamples {
-		uid, url, err := s.shortner.Shorten([]byte(e.url))
-		r.Equal([]byte(e.uid), uid)
-		if e.normalized != "" {
-			r.Equal([]byte(e.normalized), url)
-		} else {
-			r.Equal([]byte(e.url), url)
-		}
-		r.NoError(err)
-	}
+	s.errNotFound = errors.New("not found")
 }
 
 // Tests
 
-func (s *ShortnerSuite) TestShorten() {
-	for _, e := range shortenExamples {
-		uid, url, err := s.shortner.Shorten([]byte(e.url))
-		s.Equal(nil, err)
-		s.Equal([]byte(e.uid), uid)
-		if e.normalized != "" {
-			s.Equal([]byte(e.normalized), url)
-		} else {
-			s.Equal([]byte(e.url), url)
-		}
+func (s *ShortnerSuite) TestShortenExisting() {
+	rawURL := []byte("http://google.com/")
+	uid := []byte("ig")
+
+	s.store.On("Get", append([]byte("url:"), rawURL...)).Return(uid, nil)
+
+	resultUID, resultURL, err := s.shortner.Shorten(rawURL)
+	s.NoError(err)
+	s.Equal(uid, resultUID)
+	s.Equal(rawURL, resultURL)
+	s.store.AssertExpectations(s.T())
+}
+
+func (s *ShortnerSuite) TestShortenNew() {
+	rawURL := []byte("https://google.com")
+	url := []byte("https://google.com/")
+	uid := []byte("ig")
+
+	s.store.On("Get", append([]byte("url:"), url...)).Return(nil, s.errNotFound)
+	s.store.On("NextSequence").Return(1001, nil)
+	s.store.On("Set", append([]byte("url:"), url...), uid).Return(nil)
+	s.store.On("Set", append([]byte("uid:"), uid...), url).Return(nil)
+
+	rUID, rURL, err := s.shortner.Shorten(rawURL)
+
+	s.NoError(err)
+	s.Equal(uid, rUID)
+	s.Equal(url, rURL)
+	s.store.AssertExpectations(s.T())
+}
+
+func (s *ShortnerSuite) TestShortenInvalidURL() {
+	examples := []struct {
+		url   string
+		error string
+	}{
+		{
+			url:   "*$)]+_<?)",
+			error: "invalid URL",
+		},
+		{
+			url:   "",
+			error: "invalid URL",
+		},
+		{
+			url:   "file:///bin/bash",
+			error: "schema 'file://' not allowed",
+		},
+		{
+			url:   "/users/view.php?uid=138495",
+			error: "invalid URL",
+		},
+		{
+			url:   "http://long.com/" + strings.Repeat("0", 3000),
+			error: "invalid URL",
+		},
+	}
+
+	for _, e := range examples {
+		rUID, rURL, err := s.shortner.Shorten([]byte(e.url))
+		s.Nil(rUID)
+		s.Nil(rURL)
+		s.EqualError(err, e.error)
 	}
 }
 
-func (s *ShortnerSuite) TestLookup() {
-	s.Seed()
+func (s *ShortnerSuite) TestShortenStoreError() {
+	url := []byte("https://google.com/")
+	storeErr := errors.New("leveldb: something wrong")
 
-	for _, e := range shortenExamples {
-		url, err := s.shortner.Lookup([]byte(e.uid))
-		s.NoError(err)
+	s.store.On("Get", append([]byte("url:"), url...)).Return(nil, storeErr)
 
-		if e.normalized != "" {
-			s.Equal([]byte(e.normalized), url)
-		} else {
-			s.Equal([]byte(e.url), url)
-		}
-	}
+	rUID, rURL, err := s.shortner.Shorten(url)
+	s.Nil(rUID)
+	s.Nil(rURL)
+	s.EqualError(err, storeErr.Error())
+}
+
+func (s *ShortnerSuite) TestLookupExisting() {
+	url := []byte("https://google.com/")
+	uid := []byte("ig")
+
+	s.store.On("Get", append([]byte("uid:"), uid...)).Return(url, nil)
+
+	rURL, err := s.shortner.Lookup(uid)
+
+	s.NoError(err)
+	s.Equal(url, rURL)
+	s.store.AssertExpectations(s.T())
+}
+
+func (s *ShortnerSuite) TestLookupNonExistant() {
+	uid := []byte("ig")
+
+	s.store.On("Get", append([]byte("uid:"), uid...)).Return(nil, s.errNotFound)
+
+	rURL, err := s.shortner.Lookup(uid)
+
+	s.EqualError(err, "not found")
+	s.Nil(rURL)
+	s.store.AssertExpectations(s.T())
 }
 
 // Run Suite
 
 func TestShortnerSuite(t *testing.T) {
 	suite.Run(t, new(ShortnerSuite))
-}
-
-// Benchmarks
-
-func BenchmarkShorten(b *testing.B) {
-	shortner := New(NewMockStore())
-	rawURL := []byte("https://google.com/")
-
-	for n := 0; n < b.N; n++ {
-		_, _, _ = shortner.Shorten(append(rawURL, strconv.Itoa(n)...))
-	}
-}
-
-func BenchmarkLookup(b *testing.B) {
-	shortner := New(NewMockStore())
-	rawURL := []byte("https://google.com/")
-	uid, _, _ := shortner.Shorten(rawURL)
-
-	for n := 0; n < b.N; n++ {
-		_, _ = shortner.Lookup(uid)
-	}
 }

@@ -1,8 +1,6 @@
 package shortner
 
 import (
-	"errors"
-
 	"github.com/jimeh/go-base58"
 	"github.com/jimeh/ozu.io/storage"
 )
@@ -14,7 +12,6 @@ func New(store storage.Store) *Shortner {
 
 var urlKeyPrefix = []byte("url:")
 var uidKeyPrefix = []byte("uid:")
-var errNotFound = errors.New("not found")
 
 // Shortner interface
 type Shortner struct {
@@ -25,7 +22,7 @@ type Shortner struct {
 func (s *Shortner) Shorten(rawURL []byte) (uid []byte, url []byte, err error) {
 	url, err = NormalizeURL(rawURL)
 	if err != nil {
-		return []byte{}, []byte{}, err
+		return nil, nil, err
 	}
 
 	urlKey := s.makeURLKey(url)
@@ -34,23 +31,23 @@ func (s *Shortner) Shorten(rawURL []byte) (uid []byte, url []byte, err error) {
 	if uid != nil && err == nil {
 		return uid, url, nil
 	} else if err != nil && err.Error() != "not found" {
-		return []byte{}, []byte{}, nil
+		return nil, nil, err
 	}
 
 	uid, err = s.newUID()
 	if err != nil {
-		return []byte{}, []byte{}, err
+		return nil, nil, err
 	}
 
 	err = s.Store.Set(urlKey, uid)
 	if err != nil {
-		return []byte{}, []byte{}, err
+		return nil, nil, err
 	}
 
 	uidKey := s.makeUIDKey(uid)
 	err = s.Store.Set(uidKey, url)
 	if err != nil {
-		return []byte{}, []byte{}, err
+		return nil, nil, err
 	}
 
 	return uid, url, nil
@@ -62,7 +59,7 @@ func (s *Shortner) Lookup(uid []byte) ([]byte, error) {
 
 	url, err := s.Store.Get(uidKey)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
 	return url, nil
@@ -71,7 +68,7 @@ func (s *Shortner) Lookup(uid []byte) ([]byte, error) {
 func (s *Shortner) newUID() ([]byte, error) {
 	index, err := s.Store.NextSequence()
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
 	return base58.Encode(index), nil
