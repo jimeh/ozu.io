@@ -5,8 +5,8 @@ import (
 	"net/url"
 )
 
-var errURLFileSchema = errors.New("Schema 'file://' not allowed")
-var errURLInvalid = errors.New("Invalid URL")
+var errURLFileSchema = errors.New("schema 'file://' not allowed")
+var errURLInvalid = errors.New("invalid URL")
 
 var slashByte = byte(47)
 var maxLengthURL = 2048

@@ -59,22 +59,22 @@ var examples = []struct {
 	{
 		valid: false,
 		url:   "*$)]+_<?)",
-		error: "Invalid URL",
+		error: "invalid URL",
 	},
 	{
 		valid: false,
 		url:   "",
-		error: "Invalid URL",
+		error: "invalid URL",
 	},
 	{
 		valid: false,
 		url:   "file:///bin/bash",
-		error: "Schema 'file://' not allowed",
+		error: "schema 'file://' not allowed",
 	},
 	{
 		valid: false,
 		url:   "/users/view.php?uid=138495",
-		error: "Invalid URL",
+		error: "invalid URL",
 	},
 	{
 		valid:      true,
@@ -88,7 +88,7 @@ var examples = []struct {
 	{
 		valid: false,
 		url:   "http://long.com/" + strings.Repeat("0", 3000),
-		error: "Invalid URL",
+		error: "invalid URL",
 	},
 }
 
