@@ -1,29 +1,21 @@
 package main
 
 import (
-	"os"
+	"fmt"
+	"log"
 
-	"github.com/iris-contrib/middleware/logger"
-	"github.com/kataras/iris"
+	"github.com/jimeh/ozu.io/shortner"
+	"github.com/jimeh/ozu.io/storage/goleveldbstore"
+	"github.com/jimeh/ozu.io/web"
 )
 
 func main() {
-	shortner := NewShortner()
-	defer shortner.Close()
-
-	routes := Routes{Shortner: shortner}
-
-	iris.Use(logger.New(iris.Logger))
-	iris.Get("/set/:key/:value", routes.Set)
-	iris.Get("/get/:key", routes.Get)
-	iris.Get("/shorten/:url", routes.Shorten)
-	iris.Get("/lookup/:uid", routes.Lookup)
-	iris.Get("/", routes.Root)
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	store, err := goleveldbstore.New("ozuio_database")
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	iris.Listen(":" + port)
+	shortner := shortner.New(store)
+	router := web.NewRouter(shortner)
+	fmt.Println(router)
 }
