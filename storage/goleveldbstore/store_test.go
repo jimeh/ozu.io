@@ -28,13 +28,6 @@ type StoreSuite struct {
 	db    *leveldb.DB
 }
 
-func (s *StoreSuite) Seed() {
-	for _, e := range examples {
-		err := s.db.Put(e.key, e.value, nil)
-		s.Require().NoError(err)
-	}
-}
-
 func (s *StoreSuite) SetupTest() {
 	store, err := New(testDbPath)
 	s.Require().NoError(err)
@@ -45,6 +38,13 @@ func (s *StoreSuite) SetupTest() {
 func (s *StoreSuite) TearDownTest() {
 	_ = s.store.Close()
 	_ = os.RemoveAll(testDbPath)
+}
+
+func (s *StoreSuite) Seed() {
+	for _, e := range examples {
+		err := s.db.Put(e.key, e.value, nil)
+		s.Require().NoError(err)
+	}
 }
 
 // Tests
@@ -88,8 +88,16 @@ func (s *StoreSuite) TestDeleteExisting() {
 		value, _ := s.db.Get(e.key, nil)
 		s.Require().Equal(e.value, value)
 
-		err := s.store.Delete(e.key)
+		value, err := s.store.Get(e.key)
+		s.Require().NoError(err)
+		s.Require().Equal(value, e.value)
+
+		err = s.store.Delete(e.key)
 		s.NoError(err)
+
+		value, err = s.store.Get(e.key)
+		s.Nil(value)
+		s.EqualError(err, "not found")
 
 		has, _ := s.db.Has(e.key, nil)
 		s.Equal(false, has)
@@ -169,7 +177,6 @@ func BenchmarkSet(b *testing.B) {
 
 	key := []byte("hello")
 	value := []byte("world")
-	_ = store.Set(key, value)
 
 	for n := 0; n < b.N; n++ {
 		_ = store.Set(append(key, string(n)...), value)
