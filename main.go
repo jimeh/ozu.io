@@ -1,12 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
 
 	"github.com/jimeh/ozu.io/shortner"
 	"github.com/jimeh/ozu.io/storage/goleveldbstore"
 	"github.com/jimeh/ozu.io/web"
+	"github.com/valyala/fasthttp"
 )
 
 func main() {
@@ -14,8 +15,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer store.Close()
 
 	shortner := shortner.New(store)
 	router := web.NewRouter(shortner)
-	fmt.Println(router)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Fatal(fasthttp.ListenAndServe(":"+port, router.HandleRequest))
 }
