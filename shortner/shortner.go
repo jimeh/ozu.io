@@ -1,6 +1,9 @@
 package shortner
 
 import (
+	"crypto/sha1"
+	"fmt"
+
 	"github.com/jimeh/go-base58"
 	"github.com/jimeh/ozu.io/storage"
 )
@@ -79,5 +82,6 @@ func (s *Shortner) makeUIDKey(uid []byte) []byte {
 }
 
 func (s *Shortner) makeURLKey(rawURL []byte) []byte {
-	return append(urlKeyPrefix, rawURL...)
+	urlSHA := fmt.Sprintf("%x", sha1.Sum(rawURL))
+	return append(urlKeyPrefix, urlSHA...)
 }

@@ -1,7 +1,9 @@
 package shortner
 
 import (
+	"crypto/sha1"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -33,8 +35,9 @@ func (s *ShortnerSuite) SetupTest() {
 func (s *ShortnerSuite) TestShortenExisting() {
 	rawURL := []byte("http://google.com/")
 	uid := []byte("ig")
+	urlSHA := fmt.Sprintf("%x", sha1.Sum(rawURL))
 
-	s.store.On("Get", append([]byte("url:"), rawURL...)).Return(uid, nil)
+	s.store.On("Get", append([]byte("url:"), urlSHA...)).Return(uid, nil)
 
 	resultUID, resultURL, err := s.shortner.Shorten(rawURL)
 	s.NoError(err)
@@ -47,10 +50,11 @@ func (s *ShortnerSuite) TestShortenNew() {
 	rawURL := []byte("https://google.com")
 	url := []byte("https://google.com/")
 	uid := []byte("ig")
+	urlKey := append([]byte("url:"), fmt.Sprintf("%x", sha1.Sum(url))...)
 
-	s.store.On("Get", append([]byte("url:"), url...)).Return(nil, s.errNotFound)
+	s.store.On("Get", urlKey).Return(nil, s.errNotFound)
 	s.store.On("NextSequence").Return(1001, nil)
-	s.store.On("Set", append([]byte("url:"), url...), uid).Return(nil)
+	s.store.On("Set", urlKey, uid).Return(nil)
 	s.store.On("Set", append([]byte("uid:"), uid...), url).Return(nil)
 
 	rUID, rURL, err := s.shortner.Shorten(rawURL)
@@ -99,8 +103,9 @@ func (s *ShortnerSuite) TestShortenInvalidURL() {
 func (s *ShortnerSuite) TestShortenStoreError() {
 	url := []byte("https://google.com/")
 	storeErr := errors.New("leveldb: something wrong")
+	urlKey := append([]byte("url:"), fmt.Sprintf("%x", sha1.Sum(url))...)
 
-	s.store.On("Get", append([]byte("url:"), url...)).Return(nil, storeErr)
+	s.store.On("Get", urlKey).Return(nil, storeErr)
 
 	rUID, rURL, err := s.shortner.Shorten(url)
 	s.Nil(rUID)
