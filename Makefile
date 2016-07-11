@@ -1,14 +1,12 @@
-DIRS = $(shell go list ./... | grep -v /vendor/)
-
 DEV_DEPS = github.com/kardianos/govendor \
 	github.com/vektra/mockery/.../ \
 	github.com/mailru/easyjson/...
 
-test:
-	@go test $(DIRS)
+test: dev-deps
+	@govendor test +local +program
 
 generate: dev-deps
-	@go generate $(DIRS)
+	@govendor generate +local +program
 
 build:
 	mkdir -p bin && go build -o bin/ozuio
@@ -16,8 +14,11 @@ build:
 run: build
 	./bin/ozuio
 
-install-vendor:
-	go install ./vendor/...
+fetch-vendor: dev-deps
+	@govendor fetch +external +missing
+
+install-vendor: dev-deps
+	@govendor install +vendor
 
 dev-deps:
 	@$(foreach DEP,$(DEV_DEPS),go get $(DEP);)
@@ -25,4 +26,4 @@ dev-deps:
 update-dev-deps:
 	@$(foreach DEP,$(DEV_DEPS),go get -u $(DEP);)
 
-.PHONY: test build generate run install-vendor dev-deps
+.PHONY: test generate build run install-vendor dev-deps update-dev-deps
