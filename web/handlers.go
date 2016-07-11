@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/jimeh/ozu.io/shortner"
+	"github.com/jimeh/ozu.io/shortener"
 	"github.com/qiangxue/fasthttp-routing"
 	"github.com/valyala/fasthttp"
 )
 
 // Handlers handle HTTP requests.
 type Handlers struct {
-	s *shortner.Shortner
+	s *shortener.Shortener
 }
 
 // Index handles requests for root.
 func (h *Handlers) Index(c *routing.Context) error {
-	c.WriteString("Welcome to ozu.io, a shitty URL shortner.")
+	c.WriteString("Welcome to ozu.io, a shitty URL shortener.")
 	return nil
 }
 

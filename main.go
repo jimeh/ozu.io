@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/jimeh/ozu.io/shortner"
+	"github.com/jimeh/ozu.io/shortener"
 	"github.com/jimeh/ozu.io/storage/goleveldbstore"
 	"github.com/jimeh/ozu.io/web"
 	"github.com/valyala/fasthttp"
@@ -17,8 +17,8 @@ func main() {
 	}
 	defer store.Close()
 
-	shortner := shortner.New(store)
-	router := web.NewRouter(shortner)
+	s := shortener.New(store)
+	router := web.NewRouter(s)
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -1,4 +1,4 @@
-package shortner
+package shortener
 
 import (
 	"crypto/sha1"
@@ -9,20 +9,20 @@ import (
 )
 
 // New returns a new *Shortner that uses the given storage.Store.
-func New(store storage.Store) *Shortner {
-	return &Shortner{Store: store}
+func New(store storage.Store) *Shortener {
+	return &Shortener{Store: store}
 }
 
 var urlKeyPrefix = []byte("url:")
 var uidKeyPrefix = []byte("uid:")
 
 // Shortner interface
-type Shortner struct {
+type Shortener struct {
 	Store storage.Store
 }
 
 // Shorten a given URL.
-func (s *Shortner) Shorten(rawURL []byte) (uid []byte, url []byte, err error) {
+func (s *Shortener) Shorten(rawURL []byte) (uid []byte, url []byte, err error) {
 	url, err = NormalizeURL(rawURL)
 	if err != nil {
 		return nil, nil, err
@@ -57,7 +57,7 @@ func (s *Shortner) Shorten(rawURL []byte) (uid []byte, url []byte, err error) {
 }
 
 // Lookup the URL of a given UID.
-func (s *Shortner) Lookup(uid []byte) ([]byte, error) {
+func (s *Shortener) Lookup(uid []byte) ([]byte, error) {
 	uidKey := s.makeUIDKey(uid)
 
 	url, err := s.Store.Get(uidKey)
@@ -68,7 +68,7 @@ func (s *Shortner) Lookup(uid []byte) ([]byte, error) {
 	return url, nil
 }
 
-func (s *Shortner) newUID() ([]byte, error) {
+func (s *Shortener) newUID() ([]byte, error) {
 	index, err := s.Store.NextSequence()
 	if err != nil {
 		return nil, err
@@ -77,11 +77,11 @@ func (s *Shortner) newUID() ([]byte, error) {
 	return base58.Encode(index), nil
 }
 
-func (s *Shortner) makeUIDKey(uid []byte) []byte {
+func (s *Shortener) makeUIDKey(uid []byte) []byte {
 	return append(uidKeyPrefix, uid...)
 }
 
-func (s *Shortner) makeURLKey(rawURL []byte) []byte {
+func (s *Shortener) makeURLKey(rawURL []byte) []byte {
 	urlSHA := fmt.Sprintf("%x", sha1.Sum(rawURL))
 	return append(urlKeyPrefix, urlSHA...)
 }
