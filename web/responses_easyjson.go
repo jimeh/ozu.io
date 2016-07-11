@@ -79,10 +79,10 @@ func easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_ShortenedResponse(in *
 		switch key {
 		case "uid":
 			out.UID = string(in.String())
-		case "short_url":
-			out.ShortURL = string(in.String())
 		case "url":
 			out.URL = string(in.String())
+		case "target":
+			out.Target = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -104,14 +104,14 @@ func easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_ShortenedResponse(out 
 		out.RawByte(',')
 	}
 	first = false
-	out.RawString("\"short_url\":")
-	out.String(string(in.ShortURL))
+	out.RawString("\"url\":")
+	out.String(string(in.URL))
 	if !first {
 		out.RawByte(',')
 	}
 	first = false
-	out.RawString("\"url\":")
-	out.String(string(in.URL))
+	out.RawString("\"target\":")
+	out.String(string(in.Target))
 	out.RawByte('}')
 }
 func (v ShortenedResponse) MarshalJSON() ([]byte, error) {

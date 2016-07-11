@@ -4,9 +4,9 @@ package web
 
 // ShortenedResponse contains shortened URL info.
 type ShortenedResponse struct {
-	UID      string `json:"uid"`
-	ShortURL string `json:"short_url"`
-	URL      string `json:"url"`
+	UID    string `json:"uid"`
+	URL    string `json:"url"`
+	Target string `json:"target"`
 }
 
 // ErrorResponse contains error info.

@@ -71,9 +71,9 @@ func (h *Handlers) LookupAndRedirect(c *routing.Context) error {
 func (h *Handlers) respondWithShortened(c *routing.Context, uid []byte, url []byte) {
 	c.SetStatusCode(fasthttp.StatusOK)
 	response := ShortenedResponse{
-		UID:      string(uid),
-		ShortURL: h.makeShortURL(c, uid),
-		URL:      string(url),
+		UID:    string(uid),
+		URL:    h.makeShortURL(c, uid),
+		Target: string(url),
 	}
 	respBytes, _ := json.Marshal(response)
 	c.Write(respBytes)
