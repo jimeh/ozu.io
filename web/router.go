@@ -5,7 +5,7 @@ import (
 	"github.com/qiangxue/fasthttp-routing"
 )
 
-// NewRouter creates a new fasthttprouter.Router with all handlers registered.
+// NewRouter creates a new routing.Router with all handlers registered.
 func NewRouter(shortner *shortner.Shortner) *routing.Router {
 	router := routing.New()
 	handlers := Handlers{shortner}
