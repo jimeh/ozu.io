@@ -15,6 +15,11 @@ import (
 
 // NewHandler creates a new Handler object.
 func NewHandler(s shortener.Shortener) *Handler {
+	t := newHandlerTemplate()
+	return &Handler{s, t}
+}
+
+func newHandlerTemplate() *template.Template {
 	t := template.New("base")
 
 	files, err := AssetDir("templates")
@@ -31,7 +36,7 @@ func NewHandler(s shortener.Shortener) *Handler {
 		t.New(f).Parse(string(content))
 	}
 
-	return &Handler{s, t}
+	return t
 }
 
 // Handler handle HTTP requests.
