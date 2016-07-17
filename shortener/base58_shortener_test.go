@@ -17,22 +17,22 @@ import (
 
 // Suite Setup
 
-type ShortenerSuite struct {
+type Base58ShortenerSuite struct {
 	suite.Suite
 	store       *mocks.Store
-	shortener   *Shortener
+	shortener   *Base58Shortener
 	errNotFound error
 }
 
-func (s *ShortenerSuite) SetupTest() {
+func (s *Base58ShortenerSuite) SetupTest() {
 	s.store = new(mocks.Store)
-	s.shortener = New(s.store)
+	s.shortener = NewBase58(s.store)
 	s.errNotFound = errors.New("not found")
 }
 
 // Tests
 
-func (s *ShortenerSuite) TestShortenExisting() {
+func (s *Base58ShortenerSuite) TestShortenExisting() {
 	rawURL := []byte("http://google.com/")
 	uid := []byte("ig")
 	urlSHA := fmt.Sprintf("%x", sha1.Sum(rawURL))
@@ -46,7 +46,7 @@ func (s *ShortenerSuite) TestShortenExisting() {
 	s.store.AssertExpectations(s.T())
 }
 
-func (s *ShortenerSuite) TestShortenNew() {
+func (s *Base58ShortenerSuite) TestShortenNew() {
 	rawURL := []byte("https://google.com")
 	url := []byte("https://google.com/")
 	uid := []byte("ig")
@@ -65,7 +65,7 @@ func (s *ShortenerSuite) TestShortenNew() {
 	s.store.AssertExpectations(s.T())
 }
 
-func (s *ShortenerSuite) TestShortenInvalidURL() {
+func (s *Base58ShortenerSuite) TestShortenInvalidURL() {
 	examples := []struct {
 		url   string
 		error string
@@ -100,7 +100,7 @@ func (s *ShortenerSuite) TestShortenInvalidURL() {
 	}
 }
 
-func (s *ShortenerSuite) TestShortenStoreError() {
+func (s *Base58ShortenerSuite) TestShortenStoreError() {
 	url := []byte("https://google.com/")
 	storeErr := errors.New("leveldb: something wrong")
 	urlKey := append([]byte("url:"), fmt.Sprintf("%x", sha1.Sum(url))...)
@@ -113,7 +113,7 @@ func (s *ShortenerSuite) TestShortenStoreError() {
 	s.EqualError(err, storeErr.Error())
 }
 
-func (s *ShortenerSuite) TestLookupExisting() {
+func (s *Base58ShortenerSuite) TestLookupExisting() {
 	url := []byte("https://google.com/")
 	uid := []byte("ig")
 
@@ -126,7 +126,7 @@ func (s *ShortenerSuite) TestLookupExisting() {
 	s.store.AssertExpectations(s.T())
 }
 
-func (s *ShortenerSuite) TestLookupNonExistant() {
+func (s *Base58ShortenerSuite) TestLookupNonExistant() {
 	uid := []byte("ig")
 
 	s.store.On("Get", append([]byte("uid:"), uid...)).Return(nil, s.errNotFound)
@@ -141,5 +141,5 @@ func (s *ShortenerSuite) TestLookupNonExistant() {
 // Run Suite
 
 func TestShortenerSuite(t *testing.T) {
-	suite.Run(t, new(ShortenerSuite))
+	suite.Run(t, new(Base58ShortenerSuite))
 }
