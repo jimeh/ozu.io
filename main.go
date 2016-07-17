@@ -7,8 +7,16 @@ import (
 	"github.com/jimeh/ozu.io/shortener"
 	"github.com/jimeh/ozu.io/storage/goleveldbstore"
 	"github.com/jimeh/ozu.io/web"
-	"github.com/valyala/fasthttp"
 )
+
+func getPort() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	return port
+}
 
 func main() {
 	store, err := goleveldbstore.New("ozuio_database")
@@ -18,12 +26,7 @@ func main() {
 	defer store.Close()
 
 	s := shortener.New(store)
-	router := web.NewRouter(s)
+	server := web.NewServer(s)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-
-	log.Fatal(fasthttp.ListenAndServe(":"+port, router.HandleRequest))
+	log.Fatal(server.ListenAndServe(":" + getPort()))
 }
