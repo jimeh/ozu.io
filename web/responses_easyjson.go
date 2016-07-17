@@ -10,7 +10,7 @@ import (
 
 var _ = json.RawMessage{} // suppress unused package warning
 
-func easyjson_ab45bbb7_decode_github_com_jimeh_ozu_io_web_ErrorResponse(in *jlexer.Lexer, out *ErrorResponse) {
+func easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_ErrorResponse(in *jlexer.Lexer, out *ErrorResponse) {
 	if in.IsNull() {
 		in.Skip()
 		return
@@ -34,7 +34,7 @@ func easyjson_ab45bbb7_decode_github_com_jimeh_ozu_io_web_ErrorResponse(in *jlex
 	}
 	in.Delim('}')
 }
-func easyjson_ab45bbb7_encode_github_com_jimeh_ozu_io_web_ErrorResponse(out *jwriter.Writer, in ErrorResponse) {
+func easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_ErrorResponse(out *jwriter.Writer, in ErrorResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -48,21 +48,21 @@ func easyjson_ab45bbb7_encode_github_com_jimeh_ozu_io_web_ErrorResponse(out *jwr
 }
 func (v ErrorResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson_ab45bbb7_encode_github_com_jimeh_ozu_io_web_ErrorResponse(&w, v)
+	easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_ErrorResponse(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 func (v ErrorResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson_ab45bbb7_encode_github_com_jimeh_ozu_io_web_ErrorResponse(w, v)
+	easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_ErrorResponse(w, v)
 }
 func (v *ErrorResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson_ab45bbb7_decode_github_com_jimeh_ozu_io_web_ErrorResponse(&r, v)
+	easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_ErrorResponse(&r, v)
 	return r.Error()
 }
 func (v *ErrorResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson_ab45bbb7_decode_github_com_jimeh_ozu_io_web_ErrorResponse(l, v)
+	easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_ErrorResponse(l, v)
 }
-func easyjson_ab45bbb7_decode_github_com_jimeh_ozu_io_web_URLResponse(in *jlexer.Lexer, out *URLResponse) {
+func easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_URLResponse(in *jlexer.Lexer, out *URLResponse) {
 	if in.IsNull() {
 		in.Skip()
 		return
@@ -90,7 +90,7 @@ func easyjson_ab45bbb7_decode_github_com_jimeh_ozu_io_web_URLResponse(in *jlexer
 	}
 	in.Delim('}')
 }
-func easyjson_ab45bbb7_encode_github_com_jimeh_ozu_io_web_URLResponse(out *jwriter.Writer, in URLResponse) {
+func easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_URLResponse(out *jwriter.Writer, in URLResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -116,17 +116,17 @@ func easyjson_ab45bbb7_encode_github_com_jimeh_ozu_io_web_URLResponse(out *jwrit
 }
 func (v URLResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson_ab45bbb7_encode_github_com_jimeh_ozu_io_web_URLResponse(&w, v)
+	easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_URLResponse(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 func (v URLResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson_ab45bbb7_encode_github_com_jimeh_ozu_io_web_URLResponse(w, v)
+	easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_URLResponse(w, v)
 }
 func (v *URLResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson_ab45bbb7_decode_github_com_jimeh_ozu_io_web_URLResponse(&r, v)
+	easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_URLResponse(&r, v)
 	return r.Error()
 }
 func (v *URLResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson_ab45bbb7_decode_github_com_jimeh_ozu_io_web_URLResponse(l, v)
+	easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_URLResponse(l, v)
 }

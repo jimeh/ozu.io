@@ -1,6 +1,6 @@
 package web
 
-//go:generate easyjson -all api_responses.go
+//go:generate easyjson -all responses.go
 
 // URLResponse contains shortened URL info.
 type URLResponse struct {
