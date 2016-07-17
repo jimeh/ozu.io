@@ -29,10 +29,6 @@ func (s *StoreSuite) SetupTest() {
 	s.store = store
 }
 
-func (s *StoreSuite) TearDownTest() {
-	_ = s.store.Close()
-}
-
 func (s *StoreSuite) Seed() {
 	for _, e := range examples {
 		s.store.Data[string(e.key)] = e.value
@@ -136,8 +132,6 @@ func BenchmarkGet(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		_, _ = store.Get(key)
 	}
-
-	_ = store.Close()
 }
 
 func BenchmarkSet(b *testing.B) {
@@ -149,8 +143,6 @@ func BenchmarkSet(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		_ = store.Set(append(key, string(n)...), value)
 	}
-
-	_ = store.Close()
 }
 
 func BenchmarkNextSequence(b *testing.B) {
@@ -159,6 +151,4 @@ func BenchmarkNextSequence(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		_, _ = store.NextSequence()
 	}
-
-	_ = store.Close()
 }

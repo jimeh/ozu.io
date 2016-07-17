@@ -29,14 +29,16 @@ type StoreSuite struct {
 }
 
 func (s *StoreSuite) SetupTest() {
-	store, err := New(testDbPath)
+	db, errDB := leveldb.OpenFile(testDbPath, nil)
+	s.Require().NoError(errDB)
+	store, err := New(db)
 	s.Require().NoError(err)
 	s.store = store
-	s.db = store.DB
+	s.db = db
 }
 
 func (s *StoreSuite) TearDownTest() {
-	_ = s.store.Close()
+	_ = s.db.Close()
 	_ = os.RemoveAll(testDbPath)
 }
 
@@ -158,7 +160,8 @@ func TestStoreSuite(t *testing.T) {
 // Benchmarks
 
 func BenchmarkGet(b *testing.B) {
-	store, _ := New(testDbPath)
+	db, _ := leveldb.OpenFile(testDbPath, nil)
+	store, _ := New(db)
 
 	key := []byte("hello")
 	value := []byte("world")
@@ -168,12 +171,12 @@ func BenchmarkGet(b *testing.B) {
 		_, _ = store.Get(key)
 	}
 
-	_ = store.Close()
 	_ = os.RemoveAll(testDbPath)
 }
 
 func BenchmarkSet(b *testing.B) {
-	store, _ := New(testDbPath)
+	db, _ := leveldb.OpenFile(testDbPath, nil)
+	store, _ := New(db)
 
 	key := []byte("hello")
 	value := []byte("world")
@@ -182,29 +185,28 @@ func BenchmarkSet(b *testing.B) {
 		_ = store.Set(append(key, string(n)...), value)
 	}
 
-	_ = store.Close()
 	_ = os.RemoveAll(testDbPath)
 }
 
 func BenchmarkNextSequence(b *testing.B) {
-	store, _ := New(testDbPath)
+	db, _ := leveldb.OpenFile(testDbPath, nil)
+	store, _ := New(db)
 
 	for n := 0; n < b.N; n++ {
 		_, _ = store.NextSequence()
 	}
 
-	_ = store.Close()
 	_ = os.RemoveAll(testDbPath)
 }
 
 func BenchmarkIncr(b *testing.B) {
-	store, _ := New(testDbPath)
+	db, _ := leveldb.OpenFile(testDbPath, nil)
+	store, _ := New(db)
 
 	key := []byte("incr-benchmark-counter")
 	for n := 0; n < b.N; n++ {
 		_, _ = store.Incr(key)
 	}
 
-	_ = store.Close()
 	_ = os.RemoveAll(testDbPath)
 }
