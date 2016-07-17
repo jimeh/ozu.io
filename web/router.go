@@ -6,14 +6,16 @@ import (
 )
 
 // NewRouter creates a new routing.Router with all handlers registered.
-func NewRouter(shortener *shortener.Shortener) *routing.Router {
-	router := routing.New()
-	handlers := Handlers{shortener}
+func NewRouter(s shortener.Shortener) *routing.Router {
+	r := routing.New()
+	h := NewHandler(s)
 
-	router.Get("/", handlers.Index)
-	router.Get("/api/shorten", handlers.Shorten)
-	router.Get("/api/lookup", handlers.Lookup)
-	router.Get("/<uid>", handlers.LookupAndRedirect)
+	r.Get("/", h.Index)
+	r.Get("/api/shorten", h.Shorten)
+	r.Get("/api/lookup", h.Lookup)
+	r.Get("/static/*", h.Static)
+	r.Get("/<uid>", h.LookupAndRedirect)
+	r.Get("/*", h.NotFound)
 
-	return router
+	return r
 }

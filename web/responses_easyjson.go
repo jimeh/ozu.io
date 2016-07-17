@@ -62,7 +62,7 @@ func (v *ErrorResponse) UnmarshalJSON(data []byte) error {
 func (v *ErrorResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_ErrorResponse(l, v)
 }
-func easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_ShortenedResponse(in *jlexer.Lexer, out *ShortenedResponse) {
+func easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_ShortenedResponse(in *jlexer.Lexer, out *URLResponse) {
 	if in.IsNull() {
 		in.Skip()
 		return
@@ -90,7 +90,7 @@ func easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_ShortenedResponse(in *
 	}
 	in.Delim('}')
 }
-func easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_ShortenedResponse(out *jwriter.Writer, in ShortenedResponse) {
+func easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_ShortenedResponse(out *jwriter.Writer, in URLResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -114,19 +114,19 @@ func easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_ShortenedResponse(out 
 	out.String(string(in.Target))
 	out.RawByte('}')
 }
-func (v ShortenedResponse) MarshalJSON() ([]byte, error) {
+func (v URLResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
 	easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_ShortenedResponse(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
-func (v ShortenedResponse) MarshalEasyJSON(w *jwriter.Writer) {
+func (v URLResponse) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjson_559270ae_encode_github_com_jimeh_ozu_io_web_ShortenedResponse(w, v)
 }
-func (v *ShortenedResponse) UnmarshalJSON(data []byte) error {
+func (v *URLResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
 	easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_ShortenedResponse(&r, v)
 	return r.Error()
 }
-func (v *ShortenedResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
+func (v *URLResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson_559270ae_decode_github_com_jimeh_ozu_io_web_ShortenedResponse(l, v)
 }
