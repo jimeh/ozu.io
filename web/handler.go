@@ -1,10 +1,8 @@
 package web
 
 import (
-	"encoding/json"
 	"html/template"
 	"mime"
-	"net/url"
 	"path"
 	"time"
 
@@ -38,13 +36,13 @@ func NewHandler(s shortener.Shortener) *Handler {
 
 // Handler handle HTTP requests.
 type Handler struct {
-	s shortener.Shortener
-	t *template.Template
+	shortener shortener.Shortener
+	template  *template.Template
 }
 
 // Index handles requests for root.
 func (h *Handler) Index(c *routing.Context) error {
-	h.template(c, "index.html", nil)
+	h.respond(c, "index.html", nil)
 	return nil
 }
 
@@ -74,40 +72,17 @@ func (h *Handler) Static(c *routing.Context) error {
 	return nil
 }
 
-// Shorten shortens given URL.
-func (h *Handler) Shorten(c *routing.Context) error {
-	uid, url, err := h.s.Shorten(c.FormValue("url"))
-	if err != nil {
-		return h.respondWithError(c, err)
-	}
-
-	r := h.makeURLResponse(c, uid, url)
-	return h.respond(c, &r)
-}
-
-// Lookup shortened UID.
-func (h *Handler) Lookup(c *routing.Context) error {
-	uid := c.FormValue("uid")
-	url, err := h.s.Lookup(uid)
-	if err != nil {
-		return h.respondWithError(c, err)
-	}
-
-	r := h.makeURLResponse(c, uid, url)
-	return h.respond(c, &r)
-}
-
 // LookupAndRedirect looks up given UID and redirects to it's URL.
 func (h *Handler) LookupAndRedirect(c *routing.Context) error {
 	uid := []byte(c.Param("uid"))
 
-	url, err := h.s.Lookup(uid)
+	url, err := h.shortener.Lookup(uid)
 	if err != nil {
 		h.NotFound(c)
 		return nil
 	}
 
-	r := h.makeURLResponse(c, uid, url)
+	r := makeURLResponse(c, uid, url)
 
 	c.Response.Header.Set("Pragma", "no-cache")
 	c.Response.Header.Set("Expires", "Mon, 01 Jan 1990 00:00:00 GMT")
@@ -121,56 +96,11 @@ func (h *Handler) LookupAndRedirect(c *routing.Context) error {
 	c.Response.Header.Set("X-Frame-Options", "SAMEORIGIN")
 	c.Response.Header.Set("Vary", "Accept-Encoding")
 
-	h.template(c, "redirect.html", r)
+	h.respond(c, "redirect.html", r)
 	return nil
 }
 
-func (h *Handler) template(c *routing.Context, name string, data interface{}) {
+func (h *Handler) respond(c *routing.Context, name string, data interface{}) {
 	c.SetContentType("text/html; charset=UTF-8")
-	h.t.ExecuteTemplate(c, name, data)
-}
-
-func (h *Handler) respond(c *routing.Context, r *URLResponse) error {
-	resp, err := json.Marshal(r)
-	if err != nil {
-		return err
-	}
-
-	c.SetContentType("application/json")
-	c.Write(resp)
-	return nil
-}
-
-func (h *Handler) respondWithError(c *routing.Context, err error) error {
-	r := ErrorResponse{
-		Error: err.Error(),
-	}
-
-	resp, err := json.Marshal(r)
-	if err != nil {
-		return err
-	}
-
-	c.SetStatusCode(fasthttp.StatusNotFound)
-	c.SetContentType("application/json")
-	c.Write(resp)
-	return nil
-}
-
-func (h *Handler) makeURLResponse(c *routing.Context, uid []byte, url []byte) URLResponse {
-	return URLResponse{
-		UID:    string(uid),
-		URL:    h.makeShortURL(c, uid),
-		Target: string(url),
-	}
-}
-
-func (h *Handler) makeShortURL(c *routing.Context, uid []byte) string {
-	shortURL := &url.URL{
-		Scheme: "http",
-		Host:   string(c.Host()),
-		Path:   "/" + string(uid),
-	}
-
-	return shortURL.String()
+	h.template.ExecuteTemplate(c, name, data)
 }

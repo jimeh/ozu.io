@@ -1,6 +1,6 @@
 package web
 
-//go:generate easyjson -all responses.go
+//go:generate easyjson -all api_responses.go
 
 // URLResponse contains shortened URL info.
 type URLResponse struct {
@@ -9,7 +9,7 @@ type URLResponse struct {
 	Target string `json:"target"`
 }
 
-// ErrorJSONResponse contains error info.
+// ErrorResponse contains error info.
 type ErrorResponse struct {
 	Error string `json:"error"`
 }

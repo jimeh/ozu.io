@@ -8,14 +8,16 @@ import (
 // NewRouter creates a new routing.Router with all handlers registered.
 func NewRouter(s shortener.Shortener) *routing.Router {
 	r := routing.New()
-	h := NewHandler(s)
 
-	r.Get("/", h.Index)
-	r.Get("/api/shorten", h.Shorten)
-	r.Get("/api/lookup", h.Lookup)
-	r.Get("/static/*", h.Static)
-	r.Get("/<uid>", h.LookupAndRedirect)
-	r.Get("/*", h.NotFound)
+	api := NewAPIHandler(s)
+	r.Get("/api/shorten", api.Shorten)
+	r.Get("/api/lookup", api.Lookup)
+
+	handler := NewHandler(s)
+	r.Get("/", handler.Index)
+	r.Get("/static/*", handler.Static)
+	r.Get("/<uid>", handler.LookupAndRedirect)
+	r.Get("/*", handler.NotFound)
 
 	return r
 }
