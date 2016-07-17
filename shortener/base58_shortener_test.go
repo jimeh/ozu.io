@@ -138,6 +138,16 @@ func (s *Base58ShortenerSuite) TestLookupNonExistant() {
 	s.store.AssertExpectations(s.T())
 }
 
+func (s *Base58ShortenerSuite) TestLookupInvalid() {
+	uid := []byte("ig\"; drop table haha")
+
+	rURL, err := s.shortener.Lookup(uid)
+
+	s.EqualError(err, "invalid UID")
+	s.Nil(rURL)
+	s.store.AssertExpectations(s.T())
+}
+
 // Run Suite
 
 func TestShortenerSuite(t *testing.T) {

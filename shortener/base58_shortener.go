@@ -2,6 +2,7 @@ package shortener
 
 import (
 	"crypto/sha1"
+	"errors"
 	"fmt"
 
 	"github.com/jimeh/go-base58"
@@ -10,6 +11,7 @@ import (
 
 var urlKeyPrefix = []byte("url:")
 var uidKeyPrefix = []byte("uid:")
+var errInvalidUID = errors.New("invalid UID")
 
 // NewBase58 returns a new *Base58Shortner that uses the given storage.Store.
 func NewBase58(store storage.Store) *Base58Shortener {
@@ -58,6 +60,11 @@ func (s *Base58Shortener) Shorten(rawURL []byte) (uid []byte, url []byte, err er
 
 // Lookup the URL of a given UID.
 func (s *Base58Shortener) Lookup(uid []byte) ([]byte, error) {
+	_, err := base58.Decode(uid)
+	if err != nil {
+		return nil, errInvalidUID
+	}
+
 	uidKey := s.makeUIDKey(uid)
 
 	url, err := s.Store.Get(uidKey)
