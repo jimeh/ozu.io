@@ -6,12 +6,16 @@ import (
 	"github.com/qiangxue/fasthttp-routing"
 )
 
-func makeURLResponse(c *routing.Context, uid []byte, url []byte) URLResponse {
-	return URLResponse{
+func makeResponse(c *routing.Context, uid []byte, url []byte) Response {
+	return Response{
 		UID:    string(uid),
 		URL:    makeShortURL(c, uid),
 		Target: string(url),
 	}
+}
+
+func makeErrResponse(err error) Response {
+	return Response{Error: err.Error()}
 }
 
 func makeShortURL(c *routing.Context, uid []byte) string {

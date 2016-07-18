@@ -1,3 +1,36 @@
 {{template "_head.html"}}
-    Welcome to ozu.io, a drunken URL shortener.
+<div class="world">
+  <div class="content">
+    <div class="logo-wrapper">
+      <div class="logo">ozu.io</div>
+      <div class="slogan">a drunken URL shortener</div>
+    </div>
+    {{if .URL}}
+    <script type="text/javascript">
+      window.onload = function(){
+        document.getElementById('shortURL').focus();
+      }
+    </script>
+    <div class="message">
+      <input id="shortURL" onfocus="this.select()" readonly="readonly" value="{{.URL}}">
+      <div class="info">
+        is short for <a href="{{.Target | html}}">{{.Target | truncate | html}}</a>
+      </div>
+    </div>
+    {{end}}
+    {{if .Error}}
+    <div class="message error">
+      {{.Error | html}}
+    </div>
+    {{end}}
+    <div class="form">
+      <form>
+        <input type="text" name="url" placeholder="http://">
+        <button type="submit" class="btn--blue">
+          Shorten <i class="fa fa-arrow-right" aria-hidden="true"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
 {{template "_foot.html"}}

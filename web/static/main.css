@@ -1,3 +1,100 @@
 body {
-  font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+  font-weight: normal;
+  line-height: 1.5;
+}
+
+.world {
+  position: fixed;
+  top: 0px;
+  text-align: center;
+  bottom: 0px;
+  width: 100%;
+}
+
+.world .content {
+  width: 584px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -moz-transform: translate(-50%, -50%);
+  -o-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+
+.logo-wrapper {
+  font-family: "Open Sans Condensed", Helvetica, Arial, sans-serif;
+}
+
+.logo {
+  font-size: 64px;
+  height: 70px;
+  margin-top: -25px;
+}
+
+.slogan {
+  font-size: 15px;
+}
+
+.message {
+  margin-top: 20px;
+}
+
+.message.error {
+  color: #e74c3c;
+}
+
+.message input {
+  background-color: transparent;
+  border: none;
+  color: #333;
+  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+  font-size: 21px;
+  font-weight: normal;
+  padding: 0;
+  margin: 0;
+  text-align: center;
+}
+
+.message .info {
+  color: #666;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.form {
+  margin-top: 10px;
+}
+
+.form input {
+  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+  font-size: 21px;
+  font-weight: normal;
+  width: 100%;
+}
+
+.form input:focus { outline: none; }
+
+.form button {
+  color: #fff;
+  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+::-webkit-input-placeholder { /* WebKit, Blink, Edge */
+  color: #ccc;
+}
+:-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+  color: #ccc;
+  opacity:  1;
+}
+::-moz-placeholder { /* Mozilla Firefox 19+ */
+  color: #ccc;
+  opacity:  1;
+}
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+  color: #ccc;
 }

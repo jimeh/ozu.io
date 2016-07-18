@@ -25,7 +25,7 @@ func (h *APIHandler) Shorten(c *routing.Context) error {
 		return h.respondWithError(c, err)
 	}
 
-	r := makeURLResponse(c, uid, url)
+	r := makeResponse(c, uid, url)
 	return h.respond(c, &r)
 }
 
@@ -37,11 +37,11 @@ func (h *APIHandler) Lookup(c *routing.Context) error {
 		return h.respondWithError(c, err)
 	}
 
-	r := makeURLResponse(c, uid, url)
+	r := makeResponse(c, uid, url)
 	return h.respond(c, &r)
 }
 
-func (h *APIHandler) respond(c *routing.Context, r *URLResponse) error {
+func (h *APIHandler) respond(c *routing.Context, r *Response) error {
 	resp, err := json.Marshal(r)
 	if err != nil {
 		return err
@@ -53,10 +53,7 @@ func (h *APIHandler) respond(c *routing.Context, r *URLResponse) error {
 }
 
 func (h *APIHandler) respondWithError(c *routing.Context, err error) error {
-	r := ErrorResponse{
-		Error: err.Error(),
-	}
-
+	r := Response{Error: err.Error()}
 	resp, err := json.Marshal(r)
 	if err != nil {
 		return err

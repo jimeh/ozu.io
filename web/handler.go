@@ -22,6 +22,20 @@ func NewHandler(s shortener.Shortener) *Handler {
 func newHandlerTemplate() *template.Template {
 	t := template.New("base")
 
+	funcMap := template.FuncMap{
+		"truncate": func(s string) string {
+			var numRunes = 0
+			for index := range s {
+				numRunes++
+				if numRunes > 50 {
+					return s[:index] + "..."
+				}
+			}
+			return s
+		},
+	}
+	t.Funcs(funcMap)
+
 	files, err := AssetDir("templates")
 	if err != nil {
 		panic(err)
@@ -45,16 +59,28 @@ type Handler struct {
 	template  *template.Template
 }
 
-// Index handles requests for root.
-func (h *Handler) Index(c *routing.Context) error {
-	h.respond(c, "index.html", nil)
-	return nil
-}
-
 // NotFound returns a 404 error page.
 func (h *Handler) NotFound(c *routing.Context) error {
 	c.NotFound()
 	return nil
+}
+
+// Index handles requests for root.
+func (h *Handler) Index(c *routing.Context) error {
+	template := "index.html"
+	rawURL := c.FormValue("url")
+
+	if len(rawURL) > 0 {
+		uid, url, err := h.shortener.Shorten(rawURL)
+		if err != nil {
+			return h.respond(c, template, makeErrResponse(err))
+		}
+
+		r := makeResponse(c, uid, url)
+		return h.respond(c, template, r)
+	}
+
+	return h.respond(c, template, nil)
 }
 
 // Static returns assets serialized via go-bindata
@@ -63,8 +89,7 @@ func (h *Handler) Static(c *routing.Context) error {
 
 	data, err := Asset(p)
 	if err != nil {
-		h.NotFound(c)
-		return nil
+		return h.NotFound(c)
 	}
 
 	info, _ := AssetInfo(p)
@@ -83,11 +108,10 @@ func (h *Handler) LookupAndRedirect(c *routing.Context) error {
 
 	url, err := h.shortener.Lookup(uid)
 	if err != nil {
-		h.NotFound(c)
-		return nil
+		return h.NotFound(c)
 	}
 
-	r := makeURLResponse(c, uid, url)
+	r := makeResponse(c, uid, url)
 
 	c.Response.Header.Set("Pragma", "no-cache")
 	c.Response.Header.Set("Expires", "Mon, 01 Jan 1990 00:00:00 GMT")
@@ -101,11 +125,11 @@ func (h *Handler) LookupAndRedirect(c *routing.Context) error {
 	c.Response.Header.Set("X-Frame-Options", "SAMEORIGIN")
 	c.Response.Header.Set("Vary", "Accept-Encoding")
 
-	h.respond(c, "redirect.html", r)
-	return nil
+	return h.respond(c, "redirect.html", r)
 }
 
-func (h *Handler) respond(c *routing.Context, name string, data interface{}) {
+func (h *Handler) respond(c *routing.Context, name string, data interface{}) error {
 	c.SetContentType("text/html; charset=UTF-8")
 	h.template.ExecuteTemplate(c, name, data)
+	return nil
 }
