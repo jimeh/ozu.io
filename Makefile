@@ -9,9 +9,6 @@ test: dev-deps
 generate: dev-deps
 	@govendor generate +local +program
 
-generate-web:
-	cd web && go generate
-
 install: dev-deps
 	@govendor install +local +program
 
@@ -20,6 +17,12 @@ build:
 
 run: build
 	./bin/ozuio
+
+web-generate:
+	cd web && go generate
+
+web-debug-bindata:
+	cd web && go-bindata -debug -pkg web static/... templates/...
 
 fetch-vendor: dev-deps
 	@govendor fetch +external +missing
