@@ -14,12 +14,7 @@ var DefaultSequenceKey = []byte("__SEQUENCE_ID__")
 var ErrNotFound = errors.New("not found")
 
 // New creates a new Store using given path to persist data.
-func New(path string) (*Store, error) {
-	db, err := leveldb.OpenFile(path, nil)
-	if err != nil {
-		return &Store{}, err
-	}
-
+func New(db *leveldb.DB) (*Store, error) {
 	store := Store{
 		DB:          db,
 		SequenceKey: DefaultSequenceKey,
@@ -32,11 +27,6 @@ func New(path string) (*Store, error) {
 type Store struct {
 	DB          *leveldb.DB
 	SequenceKey []byte
-}
-
-// Close underlying goleveldb database.
-func (s *Store) Close() error {
-	return s.DB.Close()
 }
 
 // Get a given key's value.

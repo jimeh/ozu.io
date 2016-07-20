@@ -22,14 +22,6 @@ type Store struct {
 	sync.RWMutex
 	Data     map[string][]byte
 	Sequence int
-	Closed   bool
-}
-
-// Close database.
-func (s *Store) Close() error {
-	s.Data = make(map[string][]byte)
-	s.Sequence = 0
-	return nil
 }
 
 // Get a given key's value.
