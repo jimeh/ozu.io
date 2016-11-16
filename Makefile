@@ -62,3 +62,7 @@ web-generate:
 .PHONY: web-debug-bindata
 web-debug-bindata:
 	cd web && go-bindata -debug -pkg web static/... templates/...
+
+.PHONY: package
+package:
+	./package.sh
