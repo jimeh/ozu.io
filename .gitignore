@@ -1,1 +1,4 @@
+bin
+pkg
+ozuio_database
 vendor/*/
