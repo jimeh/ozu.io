@@ -57,8 +57,8 @@ update-dev-deps:
 
 .PHONY: web-generate
 web-generate:
-cd web && go generate
+	cd web && go generate
 
 .PHONY: web-debug-bindata
 web-debug-bindata:
-cd web && go-bindata -debug -pkg web static/... templates/...
+	cd web && go-bindata -debug -pkg web static/... templates/...
