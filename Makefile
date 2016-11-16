@@ -1,11 +1,15 @@
 DEV_DEPS = github.com/kardianos/govendor \
 	github.com/vektra/mockery/.../ \
 	github.com/mailru/easyjson/... \
-	github.com/jteeuwen/go-bindata/...
+	github.com/jteeuwen/go-bindata/... \
+	github.com/mitchellh/gox
 
-BINARY = bin/ozuio
+BINNAME = ozuio
+BINARY = bin/${BINNAME}
 BINDIR = $(shell dirname ${BINARY})
 SOURCES = $(shell find . -name '*.go')
+VERSION = $(shell cat VERSION)
+OSARCH = "linux/amd64 darwin/amd64"
 
 .DEFAULT_GOAL: $(BINARY)
 $(BINARY): $(SOURCES)
@@ -64,5 +68,7 @@ web-debug-bindata:
 	cd web && go-bindata -debug -pkg web static/... templates/...
 
 .PHONY: package
-package:
-	./package.sh
+package: dev-deps
+	gox -output "pkg/${VERSION}/${BINNAME}_${VERSION}_{{.OS}}_{{.Arch}}" \
+		-osarch=${OSARCH} \
+		-ldflags "-X main.Version=${VERSION}"
