@@ -7,13 +7,13 @@ DEV_DEPS = github.com/kardianos/govendor \
 BINNAME = ozuio
 BINARY = bin/${BINNAME}
 BINDIR = $(shell dirname ${BINARY})
-SOURCES = $(shell find . -name '*.go')
+SOURCES = $(shell find . -name '*.go' -o -name 'VERSION')
 VERSION = $(shell cat VERSION)
 OSARCH = "linux/amd64 darwin/amd64"
 
 .DEFAULT_GOAL: $(BINARY)
 $(BINARY): $(SOURCES)
-	go build -o ${BINARY}
+	go build -o ${BINARY} -ldflags "-X main.Version=${VERSION}"
 
 .PHONY: build
 build: $(BINARY)
