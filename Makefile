@@ -71,4 +71,5 @@ web-debug-bindata:
 package: dev-deps
 	gox -output "pkg/${VERSION}/${BINNAME}_${VERSION}_{{.OS}}_{{.Arch}}" \
 		-osarch=${OSARCH} \
-		-ldflags "-X main.Version=${VERSION}"
+		-ldflags "-X main.Version=${VERSION}" \
+	&& gzip -9 pkg/${VERSION}/${BINNAME}_*
