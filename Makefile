@@ -11,7 +11,12 @@ SOURCES = $(shell find . -name '*.go' -o -name 'VERSION')
 VERSION = $(shell cat VERSION)
 OSARCH = "linux/amd64 darwin/amd64"
 
-.DEFAULT_GOAL: $(BINARY)
+.DEFAULT_GOAL: test
+
+.PHONY: test
+test: dev-deps
+	@govendor test +local +program
+
 $(BINARY): $(SOURCES)
 	go build -o ${BINARY} -ldflags "-X main.Version=${VERSION}"
 
@@ -30,10 +35,6 @@ run: $(BINARY)
 .PHONY: install
 install: dev-deps
 	@govendor install +local +program
-
-.PHONY: test
-test: dev-deps
-	@govendor test +local +program
 
 .PHONY: generate
 generate: dev-deps
