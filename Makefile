@@ -68,7 +68,7 @@ web-debug-bindata:
 	cd web && go-bindata -debug -pkg web static/... templates/...
 
 .PHONY: package
-package: dev-deps
+package: dev-deps generate
 	gox -output "pkg/${VERSION}/${BINNAME}_${VERSION}_{{.OS}}_{{.Arch}}" \
 		-osarch=${OSARCH} \
 		-ldflags "-X main.Version=${VERSION}" \
