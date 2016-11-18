@@ -5,12 +5,12 @@ before_install:
   - go get github.com/kardianos/govendor
 script:
   - govendor test +local +program
-after_success:
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-    docker login -e $DOCKERHUB_EMAIL -u $DOCKERHUB_USER -p $DOCKERHUB_PASS;
-    export REPO=jimeh/ozu.io;
-    export TAG="$(if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi)";
-    make bin/ozuio_linux_amd64;
-    docker build -f Dockerfile -t $REPO:$TAG .;
-    docker push $REPO;
-    fi
+# after_success:
+#   - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+#     docker login -e $DOCKERHUB_EMAIL -u $DOCKERHUB_USER -p $DOCKERHUB_PASS;
+#     export REPO=jimeh/ozu.io;
+#     export TAG="$(if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi)";
+#     make bin/ozuio_linux_amd64;
+#     docker build -f Dockerfile -t $REPO:$TAG .;
+#     docker push $REPO;
+#     fi
