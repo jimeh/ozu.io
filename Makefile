@@ -6,6 +6,7 @@ DEV_DEPS = github.com/kardianos/govendor \
 
 BINNAME = ozuio
 BINARY = bin/${BINNAME}
+DOCKERBIN = bin/ozuio_linux_amd64
 BINDIR = $(shell dirname ${BINARY})
 SOURCES = $(shell find . -name '*.go' -o -name 'VERSION')
 VERSION = $(shell cat VERSION)
@@ -26,6 +27,7 @@ build: $(BINARY)
 .PHONY: clean
 clean:
 	if [ -f ${BINARY} ]; then rm ${BINARY}; fi; \
+	if [ -f ${DOCKERBIN} ]; then rm ${DOCKERBIN}; fi; \
 	if [ -d ${BINDIR} ]; then rmdir ${BINDIR}; fi
 
 .PHONY: run
@@ -75,12 +77,11 @@ package: dev-deps generate
 		-ldflags "-X main.Version=${VERSION}" \
 	&& gzip -9 pkg/${VERSION}/${BINNAME}_*
 
-bin/ozuio_linux_amd64: $(SOURCES)
-	CGO_ENABLED=0 GOOS=linux ARCH=amd64 \
-		go build -a -o bin/ozuio_linux_amd64 \
-		-ldflags "-X main.Version=${VERSION}"
+$(DOCKERBIN): $(SOURCES)
+	CGO_ENABLED=0 GOOS=linux ARCH=amd64 go build \
+		-a -o ${DOCKERBIN} -ldflags "-X main.Version=${VERSION}"
 
 .PHONY: build-docker
-build-docker: bin/ozuio_linux_amd64
+build-docker: $(DOCKERBIN)
 	docker build -t "jimeh/ozu.io:latest" . \
 	&& docker tag "jimeh/ozu.io:latest" "jimeh/ozu.io:${VERSION}"
