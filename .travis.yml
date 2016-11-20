@@ -3,8 +3,9 @@ go:
   - 1.7.3
 before_install:
   - go get github.com/kardianos/govendor
+  - govendor sync
 script:
-  - govendor test +local +program
+  - make test
 # after_success:
 #   - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
 #     docker login -e $DOCKERHUB_EMAIL -u $DOCKERHUB_USER -p $DOCKERHUB_PASS;
