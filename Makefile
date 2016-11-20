@@ -7,10 +7,12 @@ DEV_DEPS = github.com/kardianos/govendor \
 BINNAME = ozuio
 BINARY = bin/${BINNAME}
 DOCKERBIN = bin/ozuio_linux_amd64
+DOCKERREPO = jimeh/ozu.io
 BINDIR = $(shell dirname ${BINARY})
 SOURCES = $(shell find . -name '*.go' -o -name 'VERSION')
 VERSION = $(shell cat VERSION)
-OSARCH = "linux/amd64 darwin/amd64"
+OSARCH = "darwin/386 darwin/amd64 linux/386 linux/amd64 linux/arm"
+RELEASEDIR = releases
 
 .DEFAULT_GOAL: test
 
@@ -70,12 +72,19 @@ web-generate:
 web-debug-bindata:
 	cd web && go-bindata -debug -pkg web static/... templates/...
 
-.PHONY: package
-package: dev-deps generate
-	gox -output "pkg/${VERSION}/${BINNAME}_${VERSION}_{{.OS}}_{{.Arch}}" \
+.PHONY: release-build
+release-build:
+	gox -output "${RELEASEDIR}/${BINNAME}_${VERSION}_{{.OS}}_{{.Arch}}" \
 		-osarch=${OSARCH} \
-		-ldflags "-X main.Version=${VERSION}" \
-	&& gzip -9 pkg/${VERSION}/${BINNAME}_*
+		-ldflags "-X main.Version=${VERSION}"
+
+.SILENT: release
+.PHONY: release
+release: release-build
+	$(eval BINS := $(shell cd ${RELEASEDIR} && find . \
+		-name "${BINNAME}_${VERSION}_*" -not -name "*.tar.gz"))
+	cd $(RELEASEDIR); \
+	$(foreach BIN,$(BINS),tar -cvzf $(BIN).tar.gz $(BIN) && rm $(BIN);)
 
 $(DOCKERBIN): $(SOURCES)
 	CGO_ENABLED=0 GOOS=linux ARCH=amd64 go build \
@@ -83,5 +92,5 @@ $(DOCKERBIN): $(SOURCES)
 
 .PHONY: build-docker
 build-docker: $(DOCKERBIN)
-	docker build -t "jimeh/ozu.io:latest" . \
-	&& docker tag "jimeh/ozu.io:latest" "jimeh/ozu.io:${VERSION}"
+	docker build -t "${DOCKERREPO}:latest" . \
+	&& docker tag "${DOCKERREPO}:latest" "${DOCKERREPO}:${VERSION}"

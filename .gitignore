@@ -1,4 +1,4 @@
 bin
-pkg
+releases
 ozuio_database
 vendor/*/
