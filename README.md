@@ -1,5 +1,7 @@
 # ozu.io - A drunken, shitty URL shortener
 
+![build-status](https://api.travis-ci.org/jimeh/ozu.io.svg)
+
 What do you do when you wanna mess with a new programming language? You make a
 URL shortener, duh!
 
