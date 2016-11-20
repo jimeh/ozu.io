@@ -8,10 +8,19 @@ import (
 	jwriter "github.com/mailru/easyjson/jwriter"
 )
 
-var _ = json.RawMessage{} // suppress unused package warning
+// suppress unused package warning
+var (
+	_ = json.RawMessage{}
+	_ = jlexer.Lexer{}
+	_ = jwriter.Writer{}
+)
 
-func easyjson_6ff3ac1d_decode_github_com_jimeh_ozu_io_web_Response(in *jlexer.Lexer, out *Response) {
+func easyjson6ff3ac1dDecodeGithubComJimehOzuIoWeb(in *jlexer.Lexer, out *Response) {
+	isTopLevel := in.IsStart()
 	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
 		in.Skip()
 		return
 	}
@@ -39,8 +48,11 @@ func easyjson_6ff3ac1d_decode_github_com_jimeh_ozu_io_web_Response(in *jlexer.Le
 		in.WantComma()
 	}
 	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
 }
-func easyjson_6ff3ac1d_encode_github_com_jimeh_ozu_io_web_Response(out *jwriter.Writer, in Response) {
+func easyjson6ff3ac1dEncodeGithubComJimehOzuIoWeb(out *jwriter.Writer, in Response) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -70,19 +82,27 @@ func easyjson_6ff3ac1d_encode_github_com_jimeh_ozu_io_web_Response(out *jwriter.
 	out.String(string(in.Error))
 	out.RawByte('}')
 }
+
+// MarshalJSON supports json.Marshaler interface
 func (v Response) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson_6ff3ac1d_encode_github_com_jimeh_ozu_io_web_Response(&w, v)
+	easyjson6ff3ac1dEncodeGithubComJimehOzuIoWeb(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Response) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson_6ff3ac1d_encode_github_com_jimeh_ozu_io_web_Response(w, v)
+	easyjson6ff3ac1dEncodeGithubComJimehOzuIoWeb(w, v)
 }
+
+// UnmarshalJSON supports json.Unmarshaler interface
 func (v *Response) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson_6ff3ac1d_decode_github_com_jimeh_ozu_io_web_Response(&r, v)
+	easyjson6ff3ac1dDecodeGithubComJimehOzuIoWeb(&r, v)
 	return r.Error()
 }
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Response) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson_6ff3ac1d_decode_github_com_jimeh_ozu_io_web_Response(l, v)
+	easyjson6ff3ac1dDecodeGithubComJimehOzuIoWeb(l, v)
 }

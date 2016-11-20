@@ -13,7 +13,7 @@ import (
 
 // Mocks
 
-//go:generate mockery -name Store -dir .. -recursive
+//go:generate mockery -name Store -dir ../storage
 
 // Suite Setup
 
