@@ -3,14 +3,15 @@ package web
 import (
 	"net/url"
 
+	"github.com/jimeh/ozu.io/storage"
 	"github.com/qiangxue/fasthttp-routing"
 )
 
-func makeResponse(c *routing.Context, uid []byte, url []byte) Response {
+func makeResponse(c *routing.Context, r *storage.Record) Response {
 	return Response{
-		UID:    string(uid),
-		URL:    makeShortURL(c, uid),
-		Target: string(url),
+		UID:    string(r.UID),
+		URL:    makeShortURL(c, r.UID),
+		Target: string(r.URL),
 	}
 }
 

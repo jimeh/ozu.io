@@ -6,7 +6,7 @@ services:
 language: go
 
 go:
-  - 1.7.3
+  - 1.7.4
 
 before_install:
   - go get github.com/kardianos/govendor
@@ -16,10 +16,10 @@ script:
   - make test
 
 after_success:
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+  - if ([ "$TRAVIS_BRANCH" == "master" ] || [ -n "$TRAVIS_TAG" ]) && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
     docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS;
     export DOCKER_REPO=jimeh/ozu.io;
-    export TAG="$(if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi)";
+    export TAG="$(if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_TAG ; fi)";
     make bin/ozuio_linux_amd64;
     docker build -f Dockerfile -t $DOCKER_REPO:$TAG .;
     docker push $DOCKER_REPO:$TAG;
