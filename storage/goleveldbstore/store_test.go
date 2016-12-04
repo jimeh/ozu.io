@@ -13,13 +13,10 @@ import (
 
 var testDbPath = "./goleveldb_test_data"
 
-var examples = []struct {
-	key   []byte
-	value []byte
-}{
-	{key: []byte("hello"), value: []byte("world")},
-	{key: []byte("foo"), value: []byte("bar")},
-	{key: []byte("wtf"), value: []byte("dude")},
+var examples = []storage.Record{
+	storage.Record{UID: []byte("Kb8X"), URL: []byte("https://google.com/")},
+	storage.Record{UID: []byte("h3mz"), URL: []byte("https://github.com/")},
+	storage.Record{UID: []byte("3qxs"), URL: []byte("https://twitter.com/")},
 }
 
 type StoreSuite struct {
@@ -42,7 +39,9 @@ func (s *StoreSuite) TearDownTest() {
 
 func (s *StoreSuite) Seed() {
 	for _, e := range examples {
-		err := s.db.Put(e.key, e.value, nil)
+		err := s.db.Put(append(uidKeyPrefix, e.UID...), e.URL, nil)
+		s.Require().NoError(err)
+		err = s.db.Put(append(urlKeyPrefix, e.URL...), e.UID, nil)
 		s.Require().NoError(err)
 	}
 }
@@ -53,62 +52,112 @@ func (s *StoreSuite) TestStoreInterface() {
 	s.Implements(new(storage.Store), new(Store))
 }
 
-func (s *StoreSuite) TestSet() {
+func (s *StoreSuite) TestCreate() {
 	for _, e := range examples {
-		err := s.store.Set(e.key, e.value)
+		record, err := s.store.Create(e.UID, e.URL)
 		s.NoError(err)
+		s.Equal(e.UID, record.UID)
+		s.Equal(e.URL, record.URL)
 	}
 
 	for _, e := range examples {
-		result, _ := s.db.Get(e.key, nil)
-		s.Equal(e.value, result)
+		recordURL, _ := s.db.Get(append(uidKeyPrefix, e.UID...), nil)
+		s.Equal(e.URL, recordURL)
+		recordUID, _ := s.db.Get(append(urlKeyPrefix, e.URL...), nil)
+		s.Equal(e.UID, recordUID)
 	}
 }
 
-func (s *StoreSuite) TestGetExisting() {
+func (s *StoreSuite) TestFindExistingByUID() {
 	s.Seed()
 
 	for _, e := range examples {
-		result, err := s.store.Get(e.key)
+		record, err := s.store.FindByUID(e.UID)
 		s.NoError(err)
-		s.Equal(e.value, result)
+		s.Equal(e.UID, record.UID)
+		s.Equal(e.URL, record.URL)
 	}
 }
 
-func (s *StoreSuite) TestGetNonExistant() {
-	result, err := s.store.Get([]byte("does-not-exist"))
-	s.Nil(result)
+func (s *StoreSuite) TestFindNonExistantByUID() {
+	record, err := s.store.FindByUID([]byte("nope"))
+	s.Nil(record.UID)
+	s.Nil(record.URL)
 	s.EqualError(err, "not found")
 }
 
-func (s *StoreSuite) TestDeleteExisting() {
+func (s *StoreSuite) TestFindExistingByURL() {
 	s.Seed()
 
 	for _, e := range examples {
-		value, _ := s.db.Get(e.key, nil)
-		s.Require().Equal(e.value, value)
-
-		value, err := s.store.Get(e.key)
-		s.Require().NoError(err)
-		s.Require().Equal(value, e.value)
-
-		err = s.store.Delete(e.key)
+		record, err := s.store.FindByURL(e.URL)
 		s.NoError(err)
-
-		value, err = s.store.Get(e.key)
-		s.Nil(value)
-		s.EqualError(err, "not found")
-
-		has, _ := s.db.Has(e.key, nil)
-		s.Equal(false, has)
-		result, _ := s.db.Get(e.key, nil)
-		s.Equal([]byte{}, result)
+		s.Equal(e.UID, record.UID)
+		s.Equal(e.URL, record.URL)
 	}
 }
 
-func (s *StoreSuite) TestDeleteNonExistant() {
-	err := s.store.Delete([]byte("does-not-exist"))
-	s.NoError(err)
+func (s *StoreSuite) TestFindNonExistantByURL() {
+	record, err := s.store.FindByURL([]byte("http://nope.com/"))
+	s.Nil(record.UID)
+	s.Nil(record.URL)
+	s.EqualError(err, "not found")
+}
+
+func (s *StoreSuite) TestDeleteExistingByUID() {
+	s.Seed()
+
+	for _, e := range examples {
+		record, err := s.store.DeleteByUID(e.UID)
+		s.NoError(err)
+		s.Equal(record.UID, e.UID)
+		s.Equal(record.URL, e.URL)
+
+		record, err = s.store.FindByUID(e.UID)
+		s.Nil(record.UID)
+		s.Nil(record.URL)
+		s.EqualError(err, "not found")
+
+		record, err = s.store.FindByURL(e.URL)
+		s.Nil(record.UID)
+		s.Nil(record.URL)
+		s.EqualError(err, "not found")
+	}
+}
+
+func (s *StoreSuite) TestDeleteNonExistantByUID() {
+	record, err := s.store.DeleteByUID([]byte("nope"))
+	s.Nil(record.UID)
+	s.Nil(record.URL)
+	s.EqualError(err, "not found")
+}
+
+func (s *StoreSuite) TestDeleteExistingByURL() {
+	s.Seed()
+
+	for _, e := range examples {
+		record, err := s.store.DeleteByURL(e.URL)
+		s.NoError(err)
+		s.Equal(record.UID, e.UID)
+		s.Equal(record.URL, e.URL)
+
+		record, err = s.store.FindByUID(e.UID)
+		s.Nil(record.UID)
+		s.Nil(record.URL)
+		s.EqualError(err, "not found")
+
+		record, err = s.store.FindByURL(e.URL)
+		s.Nil(record.UID)
+		s.Nil(record.URL)
+		s.EqualError(err, "not found")
+	}
+}
+
+func (s *StoreSuite) TestDeleteNonExistantByURL() {
+	record, err := s.store.DeleteByURL([]byte("http://nope/"))
+	s.Nil(record.UID)
+	s.Nil(record.URL)
+	s.EqualError(err, "not found")
 }
 
 func (s *StoreSuite) TestNextSequenceExisting() {
@@ -135,14 +184,14 @@ func (s *StoreSuite) TestIncrExisting() {
 	err := s.db.Put(key, []byte("5"), nil)
 	s.Require().NoError(err)
 
-	result, err := s.store.Incr(key)
+	result, err := s.store.incr(key)
 	s.NoError(err)
 	s.Equal(6, result)
 }
 
 func (s *StoreSuite) TestIncrNonExistant() {
 	for i := 1; i < 10; i++ {
-		result, err := s.store.Incr([]byte("counter"))
+		result, err := s.store.incr([]byte("counter"))
 
 		s.NoError(err)
 		s.Equal(i, result)
@@ -157,54 +206,57 @@ func TestStoreSuite(t *testing.T) {
 
 // Benchmarks
 
-func BenchmarkGet(b *testing.B) {
+func BenchmarkCreate(b *testing.B) {
 	store, _ := New(testDbPath)
 
-	key := []byte("hello")
-	value := []byte("world")
-	_ = store.Set(key, value)
+	uid := []byte("Kb8X")
+	url := []byte("https://google.com/")
 
 	for n := 0; n < b.N; n++ {
-		_, _ = store.Get(key)
+		store.Create(append(uid, string(n)...), url)
 	}
 
-	_ = store.Close()
-	_ = os.RemoveAll(testDbPath)
+	store.Close()
+	os.RemoveAll(testDbPath)
 }
 
-func BenchmarkSet(b *testing.B) {
+func BenchmarkFindByUID(b *testing.B) {
 	store, _ := New(testDbPath)
 
-	key := []byte("hello")
-	value := []byte("world")
+	uid := []byte("Kb8X")
+	url := []byte("https://google.com/")
+	store.Create(uid, url)
 
 	for n := 0; n < b.N; n++ {
-		_ = store.Set(append(key, string(n)...), value)
+		store.FindByUID(uid)
 	}
 
-	_ = store.Close()
-	_ = os.RemoveAll(testDbPath)
+	store.Close()
+	os.RemoveAll(testDbPath)
+}
+
+func BenchmarkFindByURL(b *testing.B) {
+	store, _ := New(testDbPath)
+
+	uid := []byte("Kb8X")
+	url := []byte("https://google.com/")
+	store.Create(uid, url)
+
+	for n := 0; n < b.N; n++ {
+		store.FindByURL(url)
+	}
+
+	store.Close()
+	os.RemoveAll(testDbPath)
 }
 
 func BenchmarkNextSequence(b *testing.B) {
 	store, _ := New(testDbPath)
 
 	for n := 0; n < b.N; n++ {
-		_, _ = store.NextSequence()
+		store.NextSequence()
 	}
 
-	_ = store.Close()
-	_ = os.RemoveAll(testDbPath)
-}
-
-func BenchmarkIncr(b *testing.B) {
-	store, _ := New(testDbPath)
-
-	key := []byte("incr-benchmark-counter")
-	for n := 0; n < b.N; n++ {
-		_, _ = store.Incr(key)
-	}
-
-	_ = store.Close()
-	_ = os.RemoveAll(testDbPath)
+	store.Close()
+	os.RemoveAll(testDbPath)
 }

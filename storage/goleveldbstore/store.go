@@ -1,17 +1,19 @@
 package goleveldbstore
 
 import (
-	"errors"
 	"strconv"
 
+	"github.com/jimeh/ozu.io/storage"
 	"github.com/syndtr/goleveldb/leveldb"
 )
+
+const errLeveldbNotFound = "leveldb: not found"
 
 // DefaultSequenceKey is used by NextSequence().
 var DefaultSequenceKey = []byte("__SEQUENCE_ID__")
 
-// ErrNotFound is returned when Get() tries to fetch a non-existent key.
-var ErrNotFound = errors.New("not found")
+var uidKeyPrefix = []byte("!")
+var urlKeyPrefix = []byte("#")
 
 // New creates a new Store using given path to persist data.
 func New(path string) (*Store, error) {
@@ -39,33 +41,117 @@ func (s *Store) Close() error {
 	return s.DB.Close()
 }
 
-// Get a given key's value.
-func (s *Store) Get(key []byte) ([]byte, error) {
-	value, err := s.DB.Get(key, nil)
-	if err != nil && err.Error() == "leveldb: not found" {
-		return nil, ErrNotFound
+// Create a given Record.
+func (s *Store) Create(uid []byte, url []byte) (*storage.Record, error) {
+	tx, err := s.DB.OpenTransaction()
+	if err != nil {
+		return &storage.Record{}, err
 	}
 
-	return value, err
+	err = tx.Put(s.uidKey(uid), url, nil)
+	if err != nil {
+		return &storage.Record{}, err
+	}
+
+	err = tx.Put(s.urlKey(url), uid, nil)
+	if err != nil {
+		return &storage.Record{}, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return &storage.Record{}, err
+	}
+
+	return &storage.Record{UID: uid, URL: url}, nil
 }
 
-// Set a given key's to the specified value.
-func (s *Store) Set(key []byte, value []byte) error {
-	return s.DB.Put(key, value, nil)
+// FindByUID looks up records based on their UID.
+func (s *Store) FindByUID(uid []byte) (*storage.Record, error) {
+	value, err := s.DB.Get(s.uidKey(uid), nil)
+	if err != nil {
+		if err.Error() == errLeveldbNotFound {
+			return &storage.Record{}, storage.ErrNotFound
+		}
+		return &storage.Record{}, err
+	}
+
+	return &storage.Record{UID: uid, URL: value}, nil
 }
 
-// Delete a given key.
-func (s *Store) Delete(key []byte) error {
-	return s.DB.Delete(key, nil)
+// FindByURL looks up records based on their URL.
+func (s *Store) FindByURL(url []byte) (*storage.Record, error) {
+	value, err := s.DB.Get(s.urlKey(url), nil)
+	if err != nil {
+		if err.Error() == errLeveldbNotFound {
+			return &storage.Record{}, storage.ErrNotFound
+		}
+		return &storage.Record{}, err
+	}
+
+	return &storage.Record{UID: value, URL: url}, nil
+}
+
+// DeleteByUID deletes records based on their UID.
+func (s *Store) DeleteByUID(uid []byte) (*storage.Record, error) {
+	record, err := s.FindByUID(uid)
+	if err != nil {
+		return &storage.Record{}, err
+	}
+
+	s.delete(record)
+	return record, nil
+}
+
+// DeleteByURL deletes records based on their URL.
+func (s *Store) DeleteByURL(url []byte) (*storage.Record, error) {
+	record, err := s.FindByURL(url)
+	if err != nil {
+		return &storage.Record{}, err
+	}
+
+	err = s.delete(record)
+	if err != nil {
+		return &storage.Record{}, err
+	}
+
+	return record, nil
+}
+
+func (s *Store) delete(r *storage.Record) error {
+	tx, err := s.DB.OpenTransaction()
+	if err != nil {
+		return err
+	}
+
+	err = tx.Delete(s.uidKey(r.UID), nil)
+	if err != nil && err.Error() == errLeveldbNotFound {
+		return err
+	}
+
+	err = tx.Delete(s.urlKey(r.URL), nil)
+	if err != nil && err.Error() == errLeveldbNotFound {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (s *Store) uidKey(uid []byte) []byte {
+	return append(uidKeyPrefix, uid...)
+}
+
+func (s *Store) urlKey(url []byte) []byte {
+	return append(urlKeyPrefix, url...)
 }
 
 // NextSequence returns a auto-incrementing int.
 func (s *Store) NextSequence() (int, error) {
-	return s.Incr(s.SequenceKey)
+	return s.incr(s.SequenceKey)
 }
 
 // Incr increments a given key (must be numeric-like value)
-func (s *Store) Incr(key []byte) (int, error) {
+func (s *Store) incr(key []byte) (int, error) {
 	tx, err := s.DB.OpenTransaction()
 	if err != nil {
 		return -1, err
