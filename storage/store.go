@@ -1,10 +1,5 @@
 package storage
 
-import "errors"
-
-// ErrNotFound is the default error message when data is not found.
-var ErrNotFound = errors.New("not found")
-
 // Store defines a standard interface for storage
 type Store interface {
 	Close() error
@@ -14,10 +9,4 @@ type Store interface {
 	DeleteByUID(UID []byte) (*Record, error)
 	DeleteByURL(URL []byte) (*Record, error)
 	NextSequence() (int, error)
-}
-
-// Record provides a standard way to refer to a shortened URL.
-type Record struct {
-	UID []byte
-	URL []byte
 }
