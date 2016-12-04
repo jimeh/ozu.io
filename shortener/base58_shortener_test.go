@@ -1,13 +1,12 @@
 package shortener
 
 import (
-	"crypto/sha1"
 	"errors"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/jimeh/ozu.io/shortener/mocks"
+	"github.com/jimeh/ozu.io/storage"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -19,50 +18,68 @@ import (
 
 type Base58ShortenerSuite struct {
 	suite.Suite
-	store       *mocks.Store
-	shortener   *Base58Shortener
-	errNotFound error
+	store     *mocks.Store
+	shortener *Base58Shortener
 }
 
 func (s *Base58ShortenerSuite) SetupTest() {
 	s.store = new(mocks.Store)
 	s.shortener = NewBase58(s.store)
-	s.errNotFound = errors.New("not found")
 }
 
 // Tests
 
 func (s *Base58ShortenerSuite) TestShortenExisting() {
-	rawURL := []byte("http://google.com/")
 	uid := []byte("ig")
-	urlSHA := fmt.Sprintf("%x", sha1.Sum(rawURL))
+	url := []byte("https://google.com/")
+	record := storage.Record{UID: uid, URL: url}
 
-	s.store.On("Get", append([]byte("url:"), urlSHA...)).Return(uid, nil)
+	s.store.On("FindByURL", url).Return(&record, nil)
 
-	resultUID, resultURL, err := s.shortener.Shorten(rawURL)
+	result, err := s.shortener.Shorten(url)
 	s.NoError(err)
-	s.Equal(uid, resultUID)
-	s.Equal(rawURL, resultURL)
+	s.Equal(uid, result.UID)
+	s.Equal(url, result.URL)
 	s.store.AssertExpectations(s.T())
 }
 
 func (s *Base58ShortenerSuite) TestShortenNew() {
-	rawURL := []byte("https://google.com")
-	url := []byte("https://google.com/")
 	uid := []byte("ig")
-	urlKey := append([]byte("url:"), fmt.Sprintf("%x", sha1.Sum(url))...)
+	url := []byte("https://google.com/")
+	record := storage.Record{UID: uid, URL: url}
 
-	s.store.On("Get", urlKey).Return(nil, s.errNotFound)
+	s.store.On("FindByURL", url).Return(nil, storage.ErrNotFound)
 	s.store.On("NextSequence").Return(1001, nil)
-	s.store.On("Set", urlKey, uid).Return(nil)
-	s.store.On("Set", append([]byte("uid:"), uid...), url).Return(nil)
+	s.store.On("Create", uid, url).Return(&record, nil)
 
-	rUID, rURL, err := s.shortener.Shorten(rawURL)
+	result, err := s.shortener.Shorten(url)
 
 	s.NoError(err)
-	s.Equal(uid, rUID)
-	s.Equal(url, rURL)
+	s.Equal(uid, result.UID)
+	s.Equal(url, result.URL)
 	s.store.AssertExpectations(s.T())
+}
+
+func (s *Base58ShortenerSuite) TestShortenAndNormalizeURL() {
+	examples := []struct {
+		url        []byte
+		normalized []byte
+	}{
+		{[]byte("google.com"), []byte("http://google.com/")},
+		{[]byte("google.com/"), []byte("http://google.com/")},
+		{[]byte("http://google.com"), []byte("http://google.com/")},
+	}
+
+	for _, e := range examples {
+		record := storage.Record{UID: []byte("ig"), URL: e.normalized}
+		s.store.On("FindByURL", record.URL).Return(&record, nil)
+
+		result, err := s.shortener.Shorten(e.url)
+		s.NoError(err)
+		s.Equal(record.UID, result.UID)
+		s.Equal(record.URL, result.URL)
+		s.store.AssertExpectations(s.T())
+	}
 }
 
 func (s *Base58ShortenerSuite) TestShortenInvalidURL() {
@@ -93,9 +110,9 @@ func (s *Base58ShortenerSuite) TestShortenInvalidURL() {
 	}
 
 	for _, e := range examples {
-		rUID, rURL, err := s.shortener.Shorten([]byte(e.url))
-		s.Nil(rUID)
-		s.Nil(rURL)
+		record, err := s.shortener.Shorten([]byte(e.url))
+		s.Nil(record.UID)
+		s.Nil(record.URL)
 		s.EqualError(err, e.error)
 	}
 }
@@ -103,48 +120,50 @@ func (s *Base58ShortenerSuite) TestShortenInvalidURL() {
 func (s *Base58ShortenerSuite) TestShortenStoreError() {
 	url := []byte("https://google.com/")
 	storeErr := errors.New("leveldb: something wrong")
-	urlKey := append([]byte("url:"), fmt.Sprintf("%x", sha1.Sum(url))...)
 
-	s.store.On("Get", urlKey).Return(nil, storeErr)
+	s.store.On("FindByURL", url).Return(nil, storeErr)
 
-	rUID, rURL, err := s.shortener.Shorten(url)
-	s.Nil(rUID)
-	s.Nil(rURL)
+	result, err := s.shortener.Shorten(url)
+	s.Nil(result.UID)
+	s.Nil(result.URL)
 	s.EqualError(err, storeErr.Error())
+	s.store.AssertExpectations(s.T())
 }
 
 func (s *Base58ShortenerSuite) TestLookupExisting() {
-	url := []byte("https://google.com/")
 	uid := []byte("ig")
+	url := []byte("https://google.com/")
+	record := storage.Record{UID: uid, URL: url}
 
-	s.store.On("Get", append([]byte("uid:"), uid...)).Return(url, nil)
+	s.store.On("FindByUID", uid).Return(&record, nil)
 
-	rURL, err := s.shortener.Lookup(uid)
-
+	result, err := s.shortener.Lookup(uid)
 	s.NoError(err)
-	s.Equal(url, rURL)
+	s.Equal(uid, result.UID)
+	s.Equal(url, result.URL)
 	s.store.AssertExpectations(s.T())
 }
 
 func (s *Base58ShortenerSuite) TestLookupNonExistant() {
 	uid := []byte("ig")
 
-	s.store.On("Get", append([]byte("uid:"), uid...)).Return(nil, s.errNotFound)
+	s.store.On("FindByUID", uid).Return(&storage.Record{}, storage.ErrNotFound)
 
-	rURL, err := s.shortener.Lookup(uid)
-
+	result, err := s.shortener.Lookup(uid)
 	s.EqualError(err, "not found")
-	s.Nil(rURL)
+	s.Nil(result.UID)
+	s.Nil(result.URL)
 	s.store.AssertExpectations(s.T())
 }
 
 func (s *Base58ShortenerSuite) TestLookupInvalid() {
 	uid := []byte("ig\"; drop table haha")
 
-	rURL, err := s.shortener.Lookup(uid)
+	result, err := s.shortener.Lookup(uid)
 
 	s.EqualError(err, "invalid UID")
-	s.Nil(rURL)
+	s.Nil(result.UID)
+	s.Nil(result.URL)
 	s.store.AssertExpectations(s.T())
 }
 

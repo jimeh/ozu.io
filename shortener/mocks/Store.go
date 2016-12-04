@@ -22,36 +22,114 @@ func (_m *Store) Close() error {
 	return r0
 }
 
-// Delete provides a mock function with given fields: _a0
-func (_m *Store) Delete(_a0 []byte) error {
-	ret := _m.Called(_a0)
+// Create provides a mock function with given fields: UID, URL
+func (_m *Store) Create(UID []byte, URL []byte) (*storage.Record, error) {
+	ret := _m.Called(UID, URL)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func([]byte) error); ok {
-		r0 = rf(_a0)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Get provides a mock function with given fields: _a0
-func (_m *Store) Get(_a0 []byte) ([]byte, error) {
-	ret := _m.Called(_a0)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func([]byte) []byte); ok {
-		r0 = rf(_a0)
+	var r0 *storage.Record
+	if rf, ok := ret.Get(0).(func([]byte, []byte) *storage.Record); ok {
+		r0 = rf(UID, URL)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
+			r0 = ret.Get(0).(*storage.Record)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte, []byte) error); ok {
+		r1 = rf(UID, URL)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DeleteByUID provides a mock function with given fields: UID
+func (_m *Store) DeleteByUID(UID []byte) (*storage.Record, error) {
+	ret := _m.Called(UID)
+
+	var r0 *storage.Record
+	if rf, ok := ret.Get(0).(func([]byte) *storage.Record); ok {
+		r0 = rf(UID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*storage.Record)
 		}
 	}
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func([]byte) error); ok {
-		r1 = rf(_a0)
+		r1 = rf(UID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DeleteByURL provides a mock function with given fields: URL
+func (_m *Store) DeleteByURL(URL []byte) (*storage.Record, error) {
+	ret := _m.Called(URL)
+
+	var r0 *storage.Record
+	if rf, ok := ret.Get(0).(func([]byte) *storage.Record); ok {
+		r0 = rf(URL)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*storage.Record)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(URL)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindByUID provides a mock function with given fields: UID
+func (_m *Store) FindByUID(UID []byte) (*storage.Record, error) {
+	ret := _m.Called(UID)
+
+	var r0 *storage.Record
+	if rf, ok := ret.Get(0).(func([]byte) *storage.Record); ok {
+		r0 = rf(UID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*storage.Record)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(UID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindByURL provides a mock function with given fields: URL
+func (_m *Store) FindByURL(URL []byte) (*storage.Record, error) {
+	ret := _m.Called(URL)
+
+	var r0 *storage.Record
+	if rf, ok := ret.Get(0).(func([]byte) *storage.Record); ok {
+		r0 = rf(URL)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*storage.Record)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(URL)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -78,20 +156,6 @@ func (_m *Store) NextSequence() (int, error) {
 	}
 
 	return r0, r1
-}
-
-// Set provides a mock function with given fields: _a0, _a1
-func (_m *Store) Set(_a0 []byte, _a1 []byte) error {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func([]byte, []byte) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 var _ storage.Store = (*Store)(nil)

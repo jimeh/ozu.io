@@ -20,24 +20,24 @@ type APIHandler struct {
 
 // Shorten shortens given URL.
 func (h *APIHandler) Shorten(c *routing.Context) error {
-	uid, url, err := h.shortener.Shorten(c.FormValue("url"))
+	record, err := h.shortener.Shorten(c.FormValue("url"))
 	if err != nil {
 		return h.respondWithError(c, err)
 	}
 
-	r := makeResponse(c, uid, url)
+	r := makeResponse(c, record)
 	return h.respond(c, &r)
 }
 
 // Lookup shortened UID.
 func (h *APIHandler) Lookup(c *routing.Context) error {
 	uid := c.FormValue("uid")
-	url, err := h.shortener.Lookup(uid)
+	record, err := h.shortener.Lookup(uid)
 	if err != nil {
 		return h.respondWithError(c, err)
 	}
 
-	r := makeResponse(c, uid, url)
+	r := makeResponse(c, record)
 	return h.respond(c, &r)
 }
 

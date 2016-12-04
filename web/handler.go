@@ -71,12 +71,12 @@ func (h *Handler) Index(c *routing.Context) error {
 	rawURL := c.FormValue("url")
 
 	if len(rawURL) > 0 {
-		uid, url, err := h.shortener.Shorten(rawURL)
+		record, err := h.shortener.Shorten(rawURL)
 		if err != nil {
 			return h.respond(c, template, makeErrResponse(err))
 		}
 
-		r := makeResponse(c, uid, url)
+		r := makeResponse(c, record)
 		return h.respond(c, template, r)
 	}
 
@@ -106,19 +106,19 @@ func (h *Handler) Static(c *routing.Context) error {
 func (h *Handler) LookupAndRedirect(c *routing.Context) error {
 	uid := []byte(c.Param("uid"))
 
-	url, err := h.shortener.Lookup(uid)
+	record, err := h.shortener.Lookup(uid)
 	if err != nil {
 		return h.NotFound(c)
 	}
 
-	r := makeResponse(c, uid, url)
+	r := makeResponse(c, record)
 
 	c.Response.Header.Set("Pragma", "no-cache")
 	c.Response.Header.Set("Expires", "Mon, 01 Jan 1990 00:00:00 GMT")
 	c.Response.Header.Set("X-XSS-Protection", "1; mode=block")
 	c.Response.Header.Set("Cache-Control",
 		"no-cache, no-store, max-age=0, must-revalidate")
-	c.Redirect(string(url), fasthttp.StatusMovedPermanently)
+	c.Redirect(string(record.URL), fasthttp.StatusMovedPermanently)
 	c.Response.Header.Set("Connection", "close")
 	c.Response.Header.Set("X-Content-Type-Options", "nosniff")
 	c.Response.Header.Set("Accept-Ranges", "none")
